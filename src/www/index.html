@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>See My Spectrum</title>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Pragma" content="no-cache">
+<style>
+
+html, body {
+    margin:0;
+    padding:0;
+}
+html {
+	height: 100%;
+	background-color: #7d7e7d;
+}
+body {
+	margin: 0;
+	min-height: 100%;
+	color: #FFFFFF;
+	font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
+	
+	background-attachment: scroll;
+	background: #7d7e7d; /* Old browsers */
+	background: -moz-linear-gradient(top,  #7d7e7d 0%, #0e0e0e 38%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7d7e7d), color-stop(38%,#0e0e0e)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* IE10+ */
+	background: linear-gradient(to bottom,  #7d7e7d 0%,#0e0e0e 38%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
+}
+
+a {
+	color:#369;
+}
+a:hover {
+	color:#fff;
+	text-decoration:none;
+}
+
+.pre {
+    background-color: #EEEEEE;
+    color: #000000;
+    padding: 1em;
+    box-shadow: 5px 5px 5px #888888;
+    font: 14px/1.5em Courier New, monospace;
+}
+
+#header {
+}
+
+#content {
+  width: 700px ;
+  padding-top: 50px;
+  margin-left: auto ;
+  margin-right: auto ;
+}
+#plot {
+    height: 400px;
+    width: 800px;
+    box-shadow: 5px 5px 5px #888888;
+    border-style:solid;
+    border-width:1px;
+}
+
+#banner {
+    font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
+    text-align: center;
+    width: 800px;
+}
+
+#footer {
+    text-align: center;
+    width: 800px;
+}
+
+#logos {
+    width: 800px;
+}
+
+a img {border: 0;}
+</style>
+<script src="bluefile.js"></script>
+<script src="xplot.js"></script>
+<script>
+	var plot;
+	
+	function initialize() {
+		try {
+		    plot = new xplot.Plot(document.getElementById('plot'), {cmode: "LO", all: true});
+		} catch(error) {
+			plot = undefined;
+			errorMessage = document.createElement("span");
+			errorMessage.innerHTML = "Your browser is not compatible with Web XPLOT...Sorry";
+			errorMessage.style.display = "block";
+			errorMessage.style.color = "black";
+			errorMessage.style.top = "50%";
+			errorMessage.style.width = "100%";
+			errorMessage.style.fontSize = "150%";
+			errorMessage.style.textAlign = "center";
+			document.getElementById('plot').appendChild(errorMessage);
+			console.log(error);
+			return;
+		}
+	}
+
+        function getSpectrum() {
+	    plot.deoverlay();
+
+            var frequency = document.getElementById('frequency').value;
+            var device = document.getElementById('device').value;
+           
+            frequency = parseFloat(frequency);
+            if (isNaN(frequency)) {
+                alert("Invalid frequency");
+                return;
+            }
+            device = parseInt(device);
+            if (isNaN(device)) {
+                alert("Invalid device");
+                return;
+            }
+ 
+            if ((device < 0) || (device > 1)) {
+	        alert("Invalid device");
+                return;
+            } else if (device === 0) {
+	        if ((frequency < 22) || (frequency > 948)) {
+	            alert("Frequency out of range");
+                    return;
+                }
+            } else if (device === 1) {
+	        if ((frequency < 52) || (frequency > 2200)) {
+	            alert("Frequency out of range");
+                    return;
+                }
+	        if ((frequency > 1100) && (frequency < 1250)) {
+	            alert("Frequency out of range");
+                    return;
+                }
+            }
+
+	    var href="/cgi-bin/seemyspectrum/getspectrum.py?frequency="+frequency+"&device="+device;
+	    plot.overlay_href(href);
+        }
+	
+	window.onload = function() {
+		initialize();
+	}
+</script>
+<body>
+	<div id="content">
+	    <div id="banner">
+	        <h2>See My Spectrum</h2>
+                Device:
+                <select id="device" name="device">
+                    <option value="0" selected="true">PEAK 102569AGPK (22-948 MHz)</option>
+                   <!-- <option value="1">ezcap (52-1100 MHz,1250-2200 MHz)</option> -->
+                </select>
+                @
+                <input id="frequency" type="text" name="frequency" onkeydown="if (event.keyCode == 13) getSpectrum()"/> MHz
+                <button onclick="getSpectrum()">Submit</button>
+	        <br/>
+	    </div>
+	    <div id="plot"></div>
+	    <div id="footer">
+                <small>
+                <br/>
+                Use Google Chrome or Firefox...it's the sane thing to do.
+                <br/>
+                Made possible with <a href="http://sdr.osmocom.org/trac/wiki/rtl-sdr">RTL-SDR</a> and <a href="http://www.randomwalking.com/misc/xplot">WebXPLOT</a><br/>
+                <br/>
+                Equipment:<br/>
+                  Device 0: PEAK 102569AGPK (w/ stock antenna) with FC0012 <br/>
+                  Device 1: ezcap (w/ stock antenna) with E4000 Tuner <br/>
+                Acquistion: 3 MSamp/sec Complex-Byte (1 MSamp snapshot) <br/>
+                FFT: 65536 HANNING followed by median filter with window size 50<br/>
+                </small>
+                <br/>
+            </div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RTL WEB - See My Spectrum</title>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Pragma" content="no-cache">
+<style>
+
+html, body {
+    margin:0;
+    padding:0;
+}
+html {
+	height: 100%;
+	background-color: #7d7e7d;
+}
+body {
+	margin: 0;
+	min-height: 100%;
+	color: #FFFFFF;
+	font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
+	
+	background-attachment: scroll;
+	background: #7d7e7d; /* Old browsers */
+	background: -moz-linear-gradient(top,  #7d7e7d 0%, #0e0e0e 38%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7d7e7d), color-stop(38%,#0e0e0e)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  #7d7e7d 0%,#0e0e0e 38%); /* IE10+ */
+	background: linear-gradient(to bottom,  #7d7e7d 0%,#0e0e0e 38%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7d7e7d', endColorstr='#0e0e0e',GradientType=0 ); /* IE6-9 */
+}
+
+a {
+	color:#369;
+}
+a:hover {
+	color:#fff;
+	text-decoration:none;
+}
+
+.pre {
+    background-color: #EEEEEE;
+    color: #000000;
+    padding: 1em;
+    box-shadow: 5px 5px 5px #888888;
+    font: 14px/1.5em Courier New, monospace;
+}
+
+#header {
+}
+
+#content {
+  width: 700px ;
+  padding-top: 50px;
+  margin-left: auto ;
+  margin-right: auto ;
+}
+#plot {
+    height: 400px;
+    width: 800px;
+    box-shadow: 5px 5px 5px #888888;
+    border-style:solid;
+    border-width:1px;
+}
+
+#banner {
+    font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
+    text-align: center;
+    width: 800px;
+}
+
+#footer {
+    text-align: center;
+    width: 800px;
+}
+
+#logos {
+    width: 800px;
+}
+
+a img {border: 0;}
+</style>
+<script src="xplot.js"></script>
+<script>
+	var plot;
+
+	// Figure out the web-socket URL
+        var u = document.URL;
+        if (u.substring(0, 5) == "https") {
+		pcol = "wss://";
+		u = u.substr(8);
+	} else {
+		pcol = "ws://";
+		if (u.substring(0, 4) == "http")
+		u = u.substr(7);
+	}
+	u = u.split('/');
+	var wsurl = pcol + u[0];
+	var ws;
+	
+	var rtl =  new WebSocket(wsurl, "rtl");
+	
+	function initialize() {
+		try {
+		    plot = new xplot.Plot(document.getElementById('plot'), {all: true, cmode: "D2", expand: true, autol: 2, autohide_panbars: true});
+		    var lyr = plot.overlay_websocket(wsurl, {format: "SF"});
+		} catch(error) {
+			plot = undefined;
+			errorMessage = document.createElement("span");
+			errorMessage.innerHTML = "Your browser is not compatible with Web XPLOT...Sorry";
+			errorMessage.style.display = "block";
+			errorMessage.style.color = "black";
+			errorMessage.style.top = "50%";
+			errorMessage.style.width = "100%";
+			errorMessage.style.fontSize = "150%";
+			errorMessage.style.textAlign = "center";
+			document.getElementById('plot').appendChild(errorMessage);
+			console.log(error);
+			return;
+		}
+	}
+	
+	function changeFreq() {
+		var msg = {}
+
+                var freq = document.getElementById('frequency').value;
+		if (isNaN(freq)) {
+		    alert("Invalid frequency");
+		    return;
+		}
+
+		msg.frequency_hz = Math.round(parseFloat(freq) * 1e6);
+
+		var msg = JSON.stringify(msg);
+		if (rtl !== undefined) {
+			rtl.send(msg);
+		}
+	}
+	
+	window.onload = function() {
+		initialize();
+	}
+</script>
+<body>
+	<div id="content">
+	    <div id="banner">
+	        <h2>See My Spectrum</h2>
+                <input id="frequency" type="text" name="frequency" onkeydown="if (event.keyCode == 13) changeFreq()"/> MHz
+                <button onclick="changeFreq()">Submit</button>
+	        <br/>
+	    </div>
+	    <div id="plot"></div>
+	    <div id="footer">
+                <small>
+                <br/>
+                Use Google Chrome or Firefox...it's the sane thing to do.
+                <br/>
+                Made possible with <a href="http://sdr.osmocom.org/trac/wiki/rtl-sdr">RTL-SDR</a> and <a href="http://www.randomwalking.com/misc/xplot">WebXPLOT</a><br/>
+                <br/>
+                Equipment:<br/>
+                  PEAK 102569AGPK (w/ stock antenna) with FC0012 <br/>
+                  FFT: 65536 HANNING <br/>
+                </small>
+                <br/>
+            </div>
+</body>
+</html>
